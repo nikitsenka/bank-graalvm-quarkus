@@ -27,10 +27,25 @@ You can create a native executable using:
 ./gradlew build -Dquarkus.package.type=native
 ```
 
-## Run DB
+## Run DB locally
 
-```shell
-docker run --ulimit memlock=-1:-1 -it --rm=true --memory-swappiness=0 --name quarkus_test -e POSTGRES_USER=quarkus_test -e POSTGRES_PASSWORD=quarkus_test -e POSTGRES_DB=quarkus_test -p 5432:5432 postgres:10.5
 ```
+docker build --no-cache -t bank-postgres-db ./docker/db/
+docker run --name bank-postgres-db -p 5432:5432 -e POSTGRES_PASSWORD=postgres -d bank-postgres-db
+```
+### Test
+Create client
+```
+ curl -X POST http://localhost:8080/client/new/100 
+```
+Get balance
+```
+ curl -X GET http://localhost:8080/client/0/balance 
+```
+Add Money
+```
+ curl -H "Content-type: application/json" -X POST http://localhost:8080/transaction  -d '{"amount":1000,"from_client_id":0,"to_client_id":1}'
+```
+
 
 
