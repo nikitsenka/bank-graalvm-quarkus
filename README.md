@@ -24,15 +24,30 @@ You can run your application in dev mode that enables live coding using:
 
 You can create a native executable using: 
 ```shell script
-./gradlew build -Dquarkus.package.type=native
+  ./gradlew build -Dquarkus.package.type=native
+```
+
+## Build image
+```
+  docker build -f src/main/docker/Dockerfile.jvm -t quarkus/bank-graalvm-quarkus-jvm .
+```
+
+## RUN image
+```
+  docker run -i --rm -p 8080:8080 quarkus/bank-graalvm-quarkus-jvm 
 ```
 
 ## Run DB locally
-
 ```
 docker build --no-cache -t bank-postgres-db ./docker/db/
 docker run --name bank-postgres-db -p 5432:5432 -e POSTGRES_PASSWORD=postgres -d bank-postgres-db
 ```
+
+## RUN app + DB using docker-compose
+```
+  docker-compose up -d
+```
+
 ### Test
 Create client
 ```

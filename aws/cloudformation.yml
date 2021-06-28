@@ -1,0 +1,91 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+    LatestAmiId:
+        Type: "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>"
+        Default: "/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id"
+Resources:
+    BankIP:
+        Type: AWS::EC2::EIP
+    BankEC2Instance:
+        Description: Ec2 instance with running latest bank app.
+        Type: AWS::EC2::Instance
+        Properties:
+            InstanceType: "m4.large"
+            Monitoring: true
+            SecurityGroups: [!Ref "InstanceSecurityGroup"]
+            KeyName: "bank-key"
+            ImageId: !Ref LatestAmiId
+            UserData:
+                Fn::Base64: !Sub |
+                    #!/bin/bash -xe
+                    yum -y update
+                    yum -y install git vim
+                    git clone https://github.com/nikitsenka/bank-graalvm-quarkus.git
+                    cd bank-graalvm-quarkus
+                    docker run -it -v $HOME/.gradle:/root/.gradle -v $PWD:/workdir -w /workdir openjdk:11 /bin/sh ./gradlew build
+                    docker build -f src/main/docker/Dockerfile.jvm -t bank-graalvm-quarkus .
+                    docker run --name bank-graalvm-quarkus -p 80:8080 -e POSTGRES_HOST=52.50.90.18 -e POSTGRES_PASSWORD=test1234 -e POSTGRES_USER=postgres -d bank-graalvm-quarkus
+            Tags:
+                - Key: Name
+                  Value: bank-app
+    PostgresEC2Instance:
+        Description: Postgres database.
+        Type: AWS::EC2::Instance
+        Properties:
+            InstanceType: "m4.large"
+            Monitoring: true
+            SecurityGroups: [!Ref "InstanceSecurityGroup"]
+            KeyName: "bank-key"
+            ImageId: !Ref LatestAmiId
+            UserData:
+                Fn::Base64: !Sub |
+                    #!/bin/bash -xe
+                    yum -y update
+                    yum -y install git vim
+                    git clone https://github.com/nikitsenka/bank-graalvm-quarkus.git
+                    docker build --no-cache -t bank-db -f bank-graalvm-quarkus/docker/db.dockerfile bank-graalvm-quarkus
+                    docker run --name bank-db -p 5432:5432 -e POSTGRES_PASSWORD=test1234 -d bank-db
+            Tags:
+                - Key: Name
+                  Value: bank-db
+
+    InstanceSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupDescription: Enable SSH access via port 22
+            SecurityGroupIngress:
+                - IpProtocol: tcp
+                  FromPort: 22
+                  ToPort: 22
+                  CidrIp: "0.0.0.0/0"
+                - IpProtocol: tcp
+                  FromPort: 80
+                  ToPort: 80
+                  CidrIp: "0.0.0.0/0"
+                - IpProtocol: tcp
+                  FromPort: 5432
+                  ToPort: 5432
+                  CidrIp: "0.0.0.0/0"
+    BankIPAssoc:
+        Type: AWS::EC2::EIPAssociation
+        Properties:
+            InstanceId: !Ref "BankEC2Instance"
+            EIP: !Ref BankIP
+    PostgresIPAssoc:
+        Type: AWS::EC2::EIPAssociation
+        Properties:
+            InstanceId: !Ref "PostgresEC2Instance"
+            EIP: "52.50.90.18"
+Outputs:
+    InstanceId:
+        Description: InstanceId of the newly created EC2 instance
+        Value: !Ref "BankEC2Instance"
+    AZ:
+        Description: Availability Zone of the newly created EC2 instance
+        Value: !GetAtt [BankEC2Instance, AvailabilityZone]
+    PublicDNS:
+        Description: Public DNSName of the newly created EC2 instance
+        Value: !GetAtt [BankEC2Instance, PublicDnsName]
+    PublicIP:
+        Description: Public IP address of the newly created EC2 instance
+        Value: !GetAtt [BankEC2Instance, PublicIp]

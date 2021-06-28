@@ -37,3 +37,10 @@ compileJava {
 compileTestJava {
     options.encoding = 'UTF-8'
 }
+
+quarkusBuild {
+    nativeArgs {
+        containerBuild = true
+        buildImage = "quay.io/quarkus/ubi-quarkus-native-image:21.0.0-java11"
+    }
+}
