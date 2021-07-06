@@ -40,8 +40,8 @@ Resources:
               yum -y install git vim
               git clone https://github.com/nikitsenka/bank-graalvm-quarkus.git
               cd bank-graalvm-quarkus
-              docker run -it -v $HOME/.gradle:/root/.gradle -v $PWD:/workdir -w /workdir openjdk:11 /bin/sh ./gradlew build
-              docker build -f src/main/docker/Dockerfile.jvm -t bank-graalvm-quarkus .
+              docker run -it -v $HOME/.gradle:/root/.gradle -v $PWD:/workdir -w /workdir openjdk:11 /bin/sh ./gradlew build -Dquarkus.package.type=native
+              docker build -t bank-graalvm-quarkus .
               docker run --name bank-graalvm-quarkus -p 80:8080 -e POSTGRES_HOST=${DbPrivateIP} -e POSTGRES_PASSWORD=test1234 -e POSTGRES_USER=postgres -d bank-graalvm-quarkus
             - DbPrivateIP: !GetAtt PostgresEC2Instance.PrivateIp
       Tags:
