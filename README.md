@@ -29,12 +29,12 @@ You can create a native executable using:
 
 ## Build image
 ```
-  docker build -f src/main/docker/Dockerfile.jvm -t quarkus/bank-graalvm-quarkus-jvm .
+  docker build -t bank-graalvm-quarkus-jvm .
 ```
 
 ## RUN image
 ```
-  docker run -i --rm -p 8080:8080 quarkus/bank-graalvm-quarkus-jvm 
+  docker run -i --rm -p 8080:8080 bank-graalvm-quarkus 
 ```
 
 ## Run DB locally

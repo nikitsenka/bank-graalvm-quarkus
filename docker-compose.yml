@@ -4,7 +4,8 @@ services:
 
   bank-graalvm-spring:
     container_name: bank-graalvm-quarkus
-    image: quarkus/bank-graalvm-quarkus-jvm
+    image: bank-graalvm-quarkus
+    build: .
     networks:
       - bank-network
     ports:

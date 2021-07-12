@@ -15,6 +15,7 @@ Resources:
       InstanceType: "m4.large"
       Monitoring: true
       SecurityGroups: [ !Ref "InstanceSecurityGroup" ]
+      PlacementGroupName: !Ref "ClusterPlacementGroup"
       KeyName: "bank-key"
       ImageId: !Ref LatestAmiId
       Tags:
@@ -29,6 +30,7 @@ Resources:
       InstanceType: "m4.large"
       Monitoring: true
       SecurityGroups: [ !Ref "InstanceSecurityGroup" ]
+      PlacementGroupName: !Ref "ClusterPlacementGroup"
       KeyName: "bank-key"
       ImageId: !Ref LatestAmiId
       UserData:
@@ -54,17 +56,20 @@ Resources:
       InstanceType: "m4.large"
       Monitoring: true
       SecurityGroups: [ !Ref "InstanceSecurityGroup" ]
+      PlacementGroupName: !Ref "ClusterPlacementGroup"
       KeyName: "bank-key"
       ImageId: !Ref LatestAmiId
       UserData:
-        Fn::Base64: !Sub |
-          #!/bin/bash -xe
-          yum -y update
-          yum -y install git vim
-          git clone https://github.com/nikitsenka/bank-graalvm-quarkus.git
-          cd bank-graalvm-quarkus/docker/db
-          docker build --no-cache -t bank-db .
-          docker run --name bank-db -p 5432:5432 -e POSTGRES_PASSWORD=test1234 -d bank-db
+        Fn::Base64:
+          Fn::Sub:
+            - |
+              #!/bin/bash -xe
+              yum -y update
+              yum -y install git vim
+              git clone https://github.com/nikitsenka/bank-graalvm-quarkus.git
+              cd bank-graalvm-quarkus/docker/db
+              docker build --no-cache -t bank-db .
+              docker run --name bank-db -p 5432:5432 -e POSTGRES_PASSWORD=test1234 -d bank-db
       Tags:
         - Key: Name
           Value: bank-db
@@ -86,6 +91,12 @@ Resources:
           FromPort: 5432
           ToPort: 5432
           CidrIp: "0.0.0.0/0"
+
+  ClusterPlacementGroup:
+    Type: AWS::EC2::PlacementGroup
+    Properties:
+      Strategy: cluster
+
   BankIPAssoc:
     Type: AWS::EC2::EIPAssociation
     Properties:
